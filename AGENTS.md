@@ -1,3 +1,0 @@
-# whiteboard-b guardrails
-
-Read README.md. Different donor means separate App. Never modify whiteboard-a source/binding or original drawing content. Retain real public Quickdraw source and license provenance. No external media imports, external data services or fake data. Preserve all raw native drafts and explicit Save boundaries. Use current bridge Runtime, JSON Pointer queries, same-browser LWW/CAS and first field bases. No off-Room recovery store. Heavy clean gates and build share ../../porting-heavy-build.lock. First-page browser acceptance is separate from local tests. House reports belong only in Porting; messages immutable, status/index revision guarded. Master owns GitHub writes.
