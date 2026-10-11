@@ -19,5 +19,5 @@ export function Canvas({content,disabled,onChange}:{content:string;disabled:bool
   for(const [id,v]of Object.entries(current))if(!desired[id])removed[id]=v;
   store.applyDiff({added,removed,updated},'remote');
  }catch{/* preserve invalid raw source without crashing donor */}},[content]);
- return <div className="canvas" ref={host} aria-label="Quickdraw canvas"/>;
+ return <div className="canvas" ref={host} aria-label="Drawing canvas"/>;
 }

@@ -1,3 +1,5 @@
+import { mkdirSync } from 'node:fs';
+mkdirSync('.build', {recursive:true});
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -114,7 +116,7 @@ const result = {
     "Not claimed by static checks; see Porting hosted acceptance evidence.",
 };
 fs.writeFileSync(
-  path.join(root, "reports/release-check.json"),
+  path.join(root, ".build/release-check.json"),
   `${JSON.stringify(result, null, 2)}\n`,
 );
 console.log(result);

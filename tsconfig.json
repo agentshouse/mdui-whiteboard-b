@@ -28,5 +28,7 @@
     "tests",
     "vite.config.ts"
   ],
-  "exclude": []
+  "exclude": [
+    "tests/support"
+  ]
 }

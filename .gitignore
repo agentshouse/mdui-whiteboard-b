@@ -1,3 +1,7 @@
 node_modules/
 dist/
-reports/*log
+.build/
+.local-visual-dist/
+.mermaid-feasibility-dist/
+tests/screenshots/
+tests/*.log

@@ -8,10 +8,12 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=1",
     "build": "node scripts/prepare-release.mjs && vite build",
     "release:check": "node scripts/check-release.mjs",
     "notices": "node scripts/generate-notices.mjs",
+    "template:check": "node scripts/check-template.mjs",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run template:check && npm run build && npm run release:check",
     "publish": "node publish.mjs"
   },
   "dependencies": {

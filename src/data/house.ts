@@ -9,7 +9,7 @@ export const query = {types:['quickdraw_drawing'],select:{fields:'all' as const}
 export const key = (a:Pick<Drawing,'room'|'path'>)=>`${a.room}/${a.path}`;
 export function parseContent(content: string) {
   const tree:unknown=JSON.parse(content);
-  if(!validateDrawing(tree))throw new Error('Content is not a valid Quickdraw drawing. Your raw source draft is preserved.'); return tree;
+  if(!validateDrawing(tree))throw new Error('Content is not a valid drawing. Your raw source draft is preserved.'); return tree;
 }
 export function validateFields(fields: Fields) {
  if(!fields.title.trim())throw new Error('A title is required. Your partial draft is preserved.');
