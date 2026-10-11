@@ -20,7 +20,7 @@ export class DrawingStore {
   private state:Snapshot={drawings:[],ready:false,error:'',outcomes:{},saving:false};
   private listeners=new Set<()=>void>();
   private md?:Runtime; private room=''; private synced=false; private guards=false; private denied=''; private lost=''; private init?:Promise<void>;
-  private documents:Drawing[]=[]; private drafts:readonly RoomDraft[]=[]; private sessions=new Map<string,DraftSession>(); private overrides=new Map<string,Drawing>(); private jobs=new Map<string,Promise<void>>(); private failedPatches=new Map<string,Partial<Fields>>(); private uncertain=new Set<string>(); private batchOutcomes=new Map<string,string>(); private queueBatches=new Map<string,Map<string,string[]>>();
+  private documents:Drawing[]=[]; private drafts:readonly RoomDraft[]=[]; private sessions=new Map<string,DraftSession>(); private overrides=new Map<string,Drawing>(); private jobs=new Map<string,Promise<void>>(); private failedPatches=new Map<string,Partial<Fields>>(); private uncertain=new Set<string>(); private batchOutcomes=new Map<string,string>(); private queueBatches=new Map<string,Map<string,string[]>>(); private pathBatch=new Map<string,string>();
   private closes:(()=>void)[]=[]; private disposed=false; private generation=0; private queryRoom='';
   constructor(private provider:()=>Promise<Runtime>=async()=>{const bridge=connectHouseBridge();bridge.setTab({title:'whiteboard-b'});return bridge.runtime;}){}
   snapshot=()=>this.state; subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn);};};
@@ -28,10 +28,11 @@ export class DrawingStore {
   private watch<T>(obs:{current():T;subscribe(fn:()=>void):()=>void;close():void},fn:(v:T)=>void){if(this.disposed){obs.close();return;}const render=()=>{if(!this.disposed)fn(obs.current());};const off=obs.subscribe(render);this.closes.push(()=>{off();obs.close();});render();}
   private render(){
     if(!this.room){this.emit({ready:false});return;}
+    const outcomes={...this.state.outcomes};
     const drawings=new Map(this.documents.filter(a=>a.room===this.room).map(a=>[key(a),{...a}]));
-    for(const d of this.drafts){if(d.room!==this.room)continue;const k=key(d);let a=drawings.get(k);if(!a&&d.parts.creation&&'type' in d.parts.creation&&d.parts.creation.type==='quickdraw_drawing')a={room:d.room,path:d.path,fields:d.parts.creation.fields as Fields};if(!a)continue;const fields={...a.fields};for(const [name,v]of Object.entries(d.parts.fields??{}))Object.assign(fields,{[name]:v.value});drawings.set(k,{...a,fields,draft:d});}
+    for(const d of this.drafts){if(d.room!==this.room)continue;const k=key(d);let a=drawings.get(k);if(!a&&d.parts.creation&&'type' in d.parts.creation&&d.parts.creation.type==='quickdraw_drawing')a={room:d.room,path:d.path,fields:d.parts.creation.fields as Fields};if(!a)continue;const fields={...a.fields};for(const [name,v]of Object.entries(d.parts.fields??{}))Object.assign(fields,{[name]:v.value});drawings.set(k,{...a,fields,draft:d});if(d.returned)outcomes[k]=`Returned by House: ${JSON.stringify(d.returned)}`;else if(outcomes[k]==='Saved.')outcomes[k]='Saved; newer local draft not saved.';}
     for(const [k,a]of this.overrides)if(a.room===this.room)drawings.set(k,a);
-    this.emit({drawings:[...drawings.values()].sort((a,b)=>a.fields.title.localeCompare(b.fields.title)),ready:this.guards&&this.synced&&!!this.room&&!this.denied&&!this.lost});
+    this.emit({outcomes,drawings:[...drawings.values()].sort((a,b)=>a.fields.title.localeCompare(b.fields.title)),ready:this.guards&&this.synced&&!!this.room&&!this.denied&&!this.lost});
   }
   private session(a:Pick<Drawing,'room'|'path'>){const k=key(a);let s=this.sessions.get(k);if(!s){s=new DraftSession(this.md!,a.room,a.path);this.sessions.set(k,s);}return s;}
   start(){this.init??=this.connect();return this.init;}
@@ -51,11 +52,24 @@ export class DrawingStore {
     this.watch(watch,result=>{if(gen!==this.generation||room!==this.room)return;this.documents=result.documents.map(d=>({room:d.room,path:d.path,fields:d.fields as Fields}));this.render();});
     this.watch(await this.md!.observe('queue',room),entries=>{
       const outcomes={...this.state.outcomes};const previous=this.queueBatches.get(room)??new Map<string,string[]>();const current=new Map<string,string[]>();
-      for(const e of entries){const paths=e.batch.changes.filter(c=>c.path.startsWith('quickdraw/')).map(c=>`${room}/${c.path}`);current.set(e.batch.id,paths);const status=e.state==='accepted'?'Accepted by House.':e.state==='submitted'?'Submitted; waiting for House.':e.state==='reset'?'Queued; House scheduled a retry.':'Queued locally; waiting for House.';this.batchOutcomes.set(e.batch.id,status);for(const path of paths)outcomes[path]=status;}
-      for(const [batch,paths]of previous)if(!current.has(batch)&&this.batchOutcomes.get(batch)!=='Accepted by House.'){const status='Queue entry is no longer visible; review this document in House before retrying.';this.batchOutcomes.set(batch,status);for(const path of paths)outcomes[path]=status;}
+      for(const e of entries){const paths=e.batch.changes.filter(c=>c.path.startsWith('quickdraw/')).map(c=>`${room}/${c.path}`);current.set(e.batch.id,paths);const status=e.state==='accepted'?'Accepted by House; waiting for the replica.':e.state==='submitted'?'Submitted; waiting for House.':e.state==='reset'?'Queued; House scheduled a retry.':'Queued locally; waiting for House.';this.batchOutcomes.set(e.batch.id,status);for(const path of paths){this.pathBatch.set(path,e.batch.id);outcomes[path]=status;}}
       this.queueBatches.set(room,current);this.emit({outcomes});
+      for(const [batch,paths]of previous)if(!current.has(batch))void this.resolveDeparture(room,batch,paths);
     });
   }catch(e){if(gen===this.generation){this.queryRoom='';this.emit({error:message(e)});}}}
+  /** Master1845: queue departure without a returned native Draft means saved.
+   * Read the local Draft surface as well as observing it, so callback ordering
+   * cannot mistake a returned draft for acceptance. No provider request. */
+  private async resolveDeparture(room:string,batch:string,paths:string[]){
+    for(const path of paths){
+      try{
+        const draft=await this.md!.roomDraft.read(room,path.slice(room.length+1));
+        if(this.disposed||this.room!==room||this.queueBatches.get(room)?.has(batch)||this.pathBatch.get(path)!==batch)continue;
+        const status=draft?.returned?`Returned by House: ${JSON.stringify(draft.returned)}`:draft?'Saved; newer local draft not saved.':'Saved.';
+        this.batchOutcomes.set(batch,status);this.emit({outcomes:{...this.state.outcomes,[path]:status}});
+      }catch(e){if(!this.disposed&&this.pathBatch.get(path)===batch)this.emit({outcomes:{...this.state.outcomes,[path]:`Could not read the local save result: ${message(e)}`}});}
+    }
+  }
   edit(drawing:Drawing,patch:Partial<Fields>):Promise<void>{
     const k=key(drawing);const previous=this.overrides.get(k)??this.state.drawings.find(a=>key(a)===k)??drawing;
     const edited={...previous,fields:{...previous.fields,...patch},pending:true,failed:false};this.overrides.set(k,edited);this.render();
