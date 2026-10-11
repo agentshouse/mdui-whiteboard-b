@@ -1,0 +1,124 @@
+{
+  "packages": [
+    {
+      "name": "@agentshouse/app-bridge",
+      "version": "0.1.0-ce524f6608238",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@agentshouse/mdmodel",
+      "version": "0.1.0-c68e2039f1ca8",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@agentshouse/mdruntime",
+      "version": "0.1.0-cff8ba8fa2542",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@cfworker/json-schema",
+      "version": "4.1.1",
+      "license": "MIT",
+      "files": []
+    },
+    {
+      "name": "@standard-schema/spec",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@tanstack/db",
+      "version": "0.9.2",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@tanstack/db-ivm",
+      "version": "0.1.22",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "@tanstack/pacer-lite",
+      "version": "0.2.2",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "fractional-indexing",
+      "version": "3.4.0",
+      "license": "CC0-1.0",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "minisearch",
+      "version": "7.2.0",
+      "license": "MIT",
+      "files": [
+        "LICENSE.txt"
+      ]
+    },
+    {
+      "name": "react",
+      "version": "19.2.4",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "react-dom",
+      "version": "19.2.4",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "scheduler",
+      "version": "0.27.0",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "sorted-btree",
+      "version": "1.8.1",
+      "license": "MIT",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "license": "Apache-2.0",
+      "files": [
+        "LICENSE.txt",
+        "ThirdPartyNoticeText.txt"
+      ]
+    }
+  ],
+  "missing": []
+}
