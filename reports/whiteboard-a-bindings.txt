@@ -1,0 +1,13 @@
+app_ref: a_p.q
+release: 01a12c1e-1f66-7000-af07-dcf4ad8c427f
+slots:
+  - slot: drawings
+    types:
+      - drawing
+    entries:
+      - binding: 01a12adb-bf5d-7b45-bbf4-e565bf1c1dcc
+        room: r_16.q
+        access: admitted
+        compatibility: compatible
+        checked_at: 2026-10-11T18:36:05.522Z
+

@@ -1,0 +1,98 @@
+{
+  "repository": "https://github.com/quickdrawjs/quickdraw",
+  "commit": "1eba78b46f19ac0fa71454494a7bda47d4df7e47",
+  "files": [
+    {
+      "source": "packages/core/src/ui.js",
+      "vendored": "vendor/quickdraw-original/ui.js",
+      "sha256": "c1a2d3ebd181b1e391494ce3775d0463ff9abc96fd447176a170487c4d3fe139"
+    },
+    {
+      "source": "packages/core/src/palette.js",
+      "vendored": "vendor/quickdraw-original/palette.js",
+      "sha256": "bb3670a4fd9ba933fbf56522e06192910a29615090b0038d3681f5b2c9de2d5d"
+    },
+    {
+      "source": "packages/core/src/geometry.js",
+      "vendored": "vendor/quickdraw-original/geometry.js",
+      "sha256": "57004b83e246fca773ee4b1c819028a52b50fb62ac173f8d88ba1a34440d0434"
+    },
+    {
+      "source": "packages/core/src/store.js",
+      "vendored": "vendor/quickdraw-original/store.js",
+      "sha256": "95b2a397d6c18d93223f6a8002b1b0aad576d6bd50f5654fe18dce83b7adda8c"
+    },
+    {
+      "source": "packages/core/src/quickdraw.css",
+      "vendored": "vendor/quickdraw-original/quickdraw.css",
+      "sha256": "fdeb7c6f802f959c3588ca6e2d035db89037bd2261e154b6cb70cabc5d2e8912"
+    },
+    {
+      "source": "packages/core/src/editor.js",
+      "vendored": "vendor/quickdraw-original/editor.js",
+      "sha256": "8fa625acdad52ec344db21a4678f0f09e85ef13ac2798ae86f6e8f1934adf82a"
+    },
+    {
+      "source": "packages/core/src/shapes.js",
+      "vendored": "vendor/quickdraw-original/shapes.js",
+      "sha256": "28f059acdc122224c3b8785d6914f5809828b29e735d249a7994bf4acff9964d"
+    },
+    {
+      "source": "packages/core/src/freehand.js",
+      "vendored": "vendor/quickdraw-original/freehand.js",
+      "sha256": "5548e28395ff98738fb44e18a68f219317a8f3008dfeea49d9f7c1d9e8aeb4a0"
+    },
+    {
+      "source": "packages/core/src/index.js",
+      "vendored": "vendor/quickdraw-original/index.js",
+      "sha256": "e6aaeeaf203332bfcfb03581dbe36cf501b69540b000f6cd07d3aee527625c36"
+    }
+  ],
+  "adapted": [
+    {
+      "path": "vendor/quickdraw/ui.js",
+      "sha256": "ed1be2c680b4daf33800264c94c3a78be955cf80e3e27cab24d562c31cb79b14",
+      "modifications": "Image import/system clipboard removed."
+    },
+    {
+      "path": "vendor/quickdraw/palette.js",
+      "sha256": "bb3670a4fd9ba933fbf56522e06192910a29615090b0038d3681f5b2c9de2d5d",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/geometry.js",
+      "sha256": "57004b83e246fca773ee4b1c819028a52b50fb62ac173f8d88ba1a34440d0434",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/store.js",
+      "sha256": "95b2a397d6c18d93223f6a8002b1b0aad576d6bd50f5654fe18dce83b7adda8c",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/quickdraw.css",
+      "sha256": "fdeb7c6f802f959c3588ca6e2d035db89037bd2261e154b6cb70cabc5d2e8912",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/editor.js",
+      "sha256": "bd388dda798a52192822401d4170f75e55bae4a7f69a363fe23c2b0e85c1640e",
+      "modifications": "Image import/system clipboard removed."
+    },
+    {
+      "path": "vendor/quickdraw/shapes.js",
+      "sha256": "28f059acdc122224c3b8785d6914f5809828b29e735d249a7994bf4acff9964d",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/freehand.js",
+      "sha256": "5548e28395ff98738fb44e18a68f219317a8f3008dfeea49d9f7c1d9e8aeb4a0",
+      "modifications": "Unchanged upstream."
+    },
+    {
+      "path": "vendor/quickdraw/index.js",
+      "sha256": "e6aaeeaf203332bfcfb03581dbe36cf501b69540b000f6cd07d3aee527625c36",
+      "modifications": "Unchanged upstream."
+    }
+  ]
+}
