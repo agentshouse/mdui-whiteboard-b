@@ -4,7 +4,7 @@ import { DraftSession, DraftSaveUncertainError, type RoomDraft } from './draft-s
 export type Runtime = Awaited<ReturnType<typeof connectHouseBridge>['runtime']>;
 export type Fields = { title: string; content: string; archived: boolean; source_url: string; source_revision: string; author: string; license: string };
 export type Drawing = { room: string; path: string; fields: Fields; draft?: RoomDraft; pending?: boolean; failed?: boolean };
-export type Snapshot = { drawings: Drawing[]; ready: boolean; error: string; outcomes: Record<string,string>; saving: boolean };
+export type Snapshot = { drawings: Drawing[]; loaded: boolean; ready: boolean; error: string; outcomes: Record<string,string>; saving: boolean };
 export const query = {types:['quickdraw_drawing'],select:{fields:'all' as const},orderBy:[{by:{field:'/title'},direction:'asc' as const}]};
 export const key = (a:Pick<Drawing,'room'|'path'>)=>`${a.room}/${a.path}`;
 export function parseContent(content: string) {
@@ -15,24 +15,26 @@ export function validateFields(fields: Fields) {
  if(!fields.title.trim())throw new Error('A title is required. Your partial draft is preserved.');
  parseContent(fields.content); return fields;
 }
+let bridge:ReturnType<typeof connectHouseBridge>|undefined;
+export function houseBridge(){if(!bridge){bridge=connectHouseBridge();bridge.setTab({title:'whiteboard-b'});}return bridge;}
 const message=(e:unknown)=>e instanceof Error?e.message:String(e);
 export class DrawingStore {
-  private state:Snapshot={drawings:[],ready:false,error:'',outcomes:{},saving:false};
+  private state:Snapshot={drawings:[],loaded:false,ready:false,error:'',outcomes:{},saving:false};
   private listeners=new Set<()=>void>();
   private md?:Runtime; private room=''; private synced=false; private guards=false; private denied=''; private lost=''; private init?:Promise<void>;
   private documents:Drawing[]=[]; private drafts:readonly RoomDraft[]=[]; private sessions=new Map<string,DraftSession>(); private overrides=new Map<string,Drawing>(); private jobs=new Map<string,Promise<void>>(); private failedPatches=new Map<string,Partial<Fields>>(); private uncertain=new Set<string>(); private batchOutcomes=new Map<string,string>(); private queueBatches=new Map<string,Map<string,string[]>>(); private pathBatch=new Map<string,string>();
-  private closes:(()=>void)[]=[]; private disposed=false; private generation=0; private queryRoom='';
-  constructor(private provider:()=>Promise<Runtime>=async()=>{const bridge=connectHouseBridge();bridge.setTab({title:'whiteboard-b'});return bridge.runtime;}){}
+  private closes:(()=>void)[]=[]; private disposed=false; private generation=0; private queryRoom=''; private queryReceived=false;
+  constructor(private provider:()=>Promise<Runtime>=async()=>houseBridge().runtime){}
   snapshot=()=>this.state; subscribe=(fn:()=>void)=>{this.listeners.add(fn);return()=>{this.listeners.delete(fn);};};
   private emit(patch:Partial<Snapshot>={}){if(this.disposed)return;this.state={...this.state,...patch};this.listeners.forEach(fn=>fn());}
   private watch<T>(obs:{current():T;subscribe(fn:()=>void):()=>void;close():void},fn:(v:T)=>void){if(this.disposed){obs.close();return;}const render=()=>{if(!this.disposed)fn(obs.current());};const off=obs.subscribe(render);this.closes.push(()=>{off();obs.close();});render();}
   private render(){
-    if(!this.room){this.emit({ready:false});return;}
+    if(!this.room){this.emit({ready:false,loaded:false});return;}
     const outcomes={...this.state.outcomes};
     const drawings=new Map(this.documents.filter(a=>a.room===this.room).map(a=>[key(a),{...a}]));
     for(const d of this.drafts){if(d.room!==this.room)continue;const k=key(d);let a=drawings.get(k);if(!a&&d.parts.creation&&'type' in d.parts.creation&&d.parts.creation.type==='quickdraw_drawing')a={room:d.room,path:d.path,fields:d.parts.creation.fields as Fields};if(!a)continue;const fields={...a.fields};for(const [name,v]of Object.entries(d.parts.fields??{}))Object.assign(fields,{[name]:v.value});drawings.set(k,{...a,fields,draft:d});if(d.returned)outcomes[k]=`Returned by House: ${JSON.stringify(d.returned)}`;else if(outcomes[k]==='Saved.')outcomes[k]='Saved; newer local draft not saved.';}
     for(const [k,a]of this.overrides)if(a.room===this.room)drawings.set(k,a);
-    this.emit({outcomes,drawings:[...drawings.values()].sort((a,b)=>a.fields.title.localeCompare(b.fields.title)),ready:this.guards&&this.synced&&!!this.room&&!this.denied&&!this.lost});
+    this.emit({outcomes,drawings:[...drawings.values()].sort((a,b)=>a.fields.title.localeCompare(b.fields.title)),loaded:this.queryReceived&&this.queryRoom===this.room&&this.synced,ready:this.queryReceived&&this.queryRoom===this.room&&this.guards&&this.synced&&!!this.room&&!this.denied&&!this.lost});
   }
   private session(a:Pick<Drawing,'room'|'path'>){const k=key(a);let s=this.sessions.get(k);if(!s){s=new DraftSession(this.md!,a.room,a.path);this.sessions.set(k,s);}return s;}
   start(){this.init??=this.connect();return this.init;}
@@ -47,9 +49,9 @@ export class DrawingStore {
     this.watch(await this.md.observe('room-drafts'),drafts=>{this.drafts=drafts;this.sessions.forEach(s=>s.accept(drafts.find(d=>d.room===s.room&&d.path===s.path)??null));this.render();});
     this.guards=true;refresh();
   }catch(e){this.emit({error:message(e),ready:false});}}
-  private async openQuery(room:string){this.queryRoom=room;const gen=++this.generation;try{
+  private async openQuery(room:string){this.queryRoom=room;this.queryReceived=false;this.render();const gen=++this.generation;try{
     const watch=await this.md!.observe('query',{...query,rooms:[room]});if(gen!==this.generation||this.disposed){watch.close();return;}
-    this.watch(watch,result=>{if(gen!==this.generation||room!==this.room)return;this.documents=result.documents.map(d=>({room:d.room,path:d.path,fields:d.fields as Fields}));this.render();});
+    this.watch(watch,result=>{if(gen!==this.generation||room!==this.room)return;this.queryReceived=true;this.documents=result.documents.map(d=>({room:d.room,path:d.path,fields:d.fields as Fields}));this.render();});
     this.watch(await this.md!.observe('queue',room),entries=>{
       const outcomes={...this.state.outcomes};const previous=this.queueBatches.get(room)??new Map<string,string[]>();const current=new Map<string,string[]>();
       for(const e of entries){const paths=e.batch.changes.filter(c=>c.path.startsWith('quickdraw/')).map(c=>`${room}/${c.path}`);current.set(e.batch.id,paths);const status=e.state==='accepted'?'Accepted by House; waiting for the replica.':e.state==='submitted'?'Submitted; waiting for House.':e.state==='reset'?'Queued; House scheduled a retry.':'Queued locally; waiting for House.';this.batchOutcomes.set(e.batch.id,status);for(const path of paths){this.pathBatch.set(path,e.batch.id);outcomes[path]=status;}}
