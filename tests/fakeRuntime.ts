@@ -32,7 +32,7 @@ export function fakeRuntime(initial:unknown[]=[]) {
    }),
   },
   save:vi.fn(async(room:string,entries:{path:string;revision:string}[])=>{
-   for(const entry of entries)if(drafts.get(key(room,entry.path))?.revision!==entry.revision)return {outcome:'refused',rule:'stale'};
+   for(const entry of entries)if(drafts.get(key(room,entry.path))?.revision!==entry.revision)return {outcome:'refused',code:'stale', retryable: false};
    for(const entry of entries){
     const draft=drafts.get(key(room,entry.path))!;
     const creation=draft.parts.creation;

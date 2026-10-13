@@ -6,7 +6,7 @@ export type DraftPatch = DraftParts | ((current: RoomDraft | null) => DraftParts
 export type SaveRefusal = Exclude<Awaited<ReturnType<HouseRuntime['save']>>, { outcome: 'saved' }>;
 export class DraftSaveError extends Error {
   constructor(readonly refusal: SaveRefusal) {
-    super(`House did not queue this draft: ${refusal.rule}. The draft is preserved.`);
+    super(`House did not queue this draft: ${refusal.code}. The draft is preserved.`);
   }
 }
 export class DraftChangedError extends Error {
