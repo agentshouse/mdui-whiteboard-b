@@ -51,7 +51,7 @@ export class DrawingStore {
   }catch(e){this.emit({error:message(e),ready:false});}}
   private async openQuery(room:string){this.queryRoom=room;this.queryReceived=false;this.render();const gen=++this.generation;try{
     const watch=await this.md!.observe('query',{...query,rooms:[room]});if(gen!==this.generation||this.disposed){watch.close();return;}
-    this.watch(watch,result=>{if(gen!==this.generation||room!==this.room)return;this.queryReceived=true;this.documents=result.documents.map(d=>({room:d.room,path:d.path,fields:d.fields as Fields}));this.render();});
+    this.watch(watch,result=>{if(gen!==this.generation||room!==this.room)return;if('pending' in result){this.queryReceived=false;this.render();return;}this.queryReceived=true;this.documents=result.documents.map(d=>({room:d.room,path:d.path,fields:d.fields as Fields}));this.render();});
     this.watch(await this.md!.observe('queue',room),entries=>{
       const outcomes={...this.state.outcomes};const previous=this.queueBatches.get(room)??new Map<string,string[]>();const current=new Map<string,string[]>();
       for(const e of entries){const paths=e.batch.changes.filter(c=>c.path.startsWith('quickdraw/')).map(c=>`${room}/${c.path}`);current.set(e.batch.id,paths);const status=e.state==='accepted'?'Accepted by House; waiting for the replica.':e.state==='submitted'?'Submitted; waiting for House.':e.state==='reset'?'Queued; House scheduled a retry.':'Queued locally; waiting for House.';this.batchOutcomes.set(e.batch.id,status);for(const path of paths){this.pathBatch.set(path,e.batch.id);outcomes[path]=status;}}
